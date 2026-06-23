@@ -8,3 +8,4 @@ coverage/
 *.log
 .idea/
 .vscode/
+apps/api/src/generated/prisma/

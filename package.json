@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "pnpm --filter @url-shortener/api dev",
     "build": "pnpm -r build",
+    "db:generate": "pnpm --filter @url-shortener/api db:generate",
+    "db:migrate": "pnpm --filter @url-shortener/api db:migrate",
+    "db:studio": "pnpm --filter @url-shortener/api db:studio",
+    "db:validate": "pnpm --filter @url-shortener/api db:validate",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
