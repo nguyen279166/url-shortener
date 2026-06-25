@@ -2,9 +2,11 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 
+import { errorMiddleware } from "./middleware/error.middleware.js";
 import { healthRouter } from "./routes/health.route.js";
+import { linkRouter } from "./routes/link.route.js";
 
-export function createApp() {
+export const createApp = () => {
   const app = express();
 
   app.disable("x-powered-by");
@@ -13,10 +15,13 @@ export function createApp() {
   app.use(express.json({ limit: "10kb" }));
 
   app.use("/api/health", healthRouter);
+  app.use("/api/links", linkRouter);
 
   app.use((_request, response) => {
     response.status(404).json({ message: "Route not found" });
   });
 
+  app.use(errorMiddleware);
+
   return app;
-}
+};

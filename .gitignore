@@ -6,6 +6,7 @@ coverage/
 !.env.example
 .DS_Store
 *.log
+*.tsbuildinfo
 .idea/
 .vscode/
 apps/api/src/generated/prisma/
