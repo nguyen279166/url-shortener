@@ -33,3 +33,16 @@ export const createLinkSchema = z
   .strict();
 
 export type CreateLinkInput = z.infer<typeof createLinkSchema>;
+
+export const linkSlugParamsSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1, "Slug is required")
+    .max(64, "Slug must be at most 64 characters")
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      "Slug can only contain letters, numbers, dashes, and underscores",
+    )
+    .transform((value) => value.toLowerCase()),
+});

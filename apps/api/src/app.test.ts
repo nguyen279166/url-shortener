@@ -14,7 +14,7 @@ describe("API", () => {
   });
 
   it("returns JSON for unknown routes", async () => {
-    const response = await request(app).get("/missing");
+    const response = await request(app).get("/missing/path");
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ message: "Route not found" });

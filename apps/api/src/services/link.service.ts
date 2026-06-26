@@ -62,3 +62,24 @@ export const createShortLink = async (input: CreateLinkInput) => {
     updatedAt: shortLink.updatedAt,
   };
 };
+
+export const getRedirectTarget = async (slug: string) => {
+  const shortLink = await prisma.shortLink.findUnique({ where: { slug } });
+
+  if (!shortLink) {
+    throw new HttpError(404, "Short link not found");
+  }
+
+  if (!shortLink.isActive) {
+    throw new HttpError(410, "Short link is inactive");
+  }
+
+  if (shortLink.expiresAt && shortLink.expiresAt.getTime() <= Date.now()) {
+    throw new HttpError(410, "Short link has expired");
+  }
+
+  return {
+    slug: shortLink.slug,
+    originalUrl: shortLink.originalUrl,
+  };
+};
