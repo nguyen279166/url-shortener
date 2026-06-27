@@ -7,8 +7,37 @@ short links, custom aliases, redirect caching, rate limiting, and click analytic
 
 - Frontend: React + Vite (planned)
 - API: Node.js, Express, TypeScript
-- Database: PostgreSQL + Prisma (planned)
+- Database: PostgreSQL + Prisma
 - Cache: Redis (planned)
+
+## Current backend flow
+
+The API currently supports the core URL shortener loop:
+
+```txt
+POST /api/links
+-> validate the submitted URL and optional custom alias
+-> save the short link in PostgreSQL
+-> return the generated short path
+
+GET /:slug
+-> look up the slug in PostgreSQL
+-> return 404 if it does not exist
+-> return 410 if the link is inactive or expired
+-> redirect the browser to the original URL with HTTP 302
+```
+
+Example create request:
+
+```powershell
+Invoke-RestMethod `
+  -Uri http://localhost:3000/api/links `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{"url":"https://example.com","customAlias":"demo-link"}'
+```
+
+Then open `http://localhost:3000/demo-link` in the browser to test the redirect.
 
 ## Local development
 
