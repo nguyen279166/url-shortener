@@ -39,6 +39,14 @@ Invoke-RestMethod `
 
 Then open `http://localhost:3000/demo-link` in the browser to test the redirect.
 
+## Backend roadmap
+
+- [x] Create short links
+- [x] Redirect short links to original URLs
+- [ ] Track click analytics
+- [ ] Add Redis caching for redirects
+- [ ] Add rate limiting
+
 ## Local development
 
 Requirements: Node.js 22+, pnpm 10+, and Docker Desktop.
