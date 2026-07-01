@@ -1,4 +1,4 @@
-import { randomInt } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 
 import prisma from "../lib/prisma.js";
 import { HttpError } from "../middleware/error.middleware.js";
@@ -8,6 +8,13 @@ const SLUG_ALPHABET =
   "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const GENERATED_SLUG_LENGTH = 7;
 const MAX_SLUG_GENERATION_ATTEMPTS = 5;
+
+type RecordClickInput = {
+  shortLinkId: string;
+  referrer?: string | undefined;
+  userAgent?: string | undefined;
+  ipAddress?: string | undefined;
+};
 
 const generateRandomSlug = () => {
   let slug = "";
@@ -30,6 +37,22 @@ const generateUniqueSlug = async () => {
   }
 
   throw new HttpError(500, "Could not generate a unique short link");
+};
+
+const normalizeOptionalText = (value: string | undefined) => {
+  const trimmedValue = value?.trim();
+
+  return trimmedValue ? trimmedValue : null;
+};
+
+const hashIpAddress = (ipAddress: string | undefined) => {
+  const normalizedIpAddress = normalizeOptionalText(ipAddress);
+
+  if (!normalizedIpAddress) {
+    return null;
+  }
+
+  return createHash("sha256").update(normalizedIpAddress).digest("hex");
 };
 
 export const createShortLink = async (input: CreateLinkInput) => {
@@ -79,7 +102,59 @@ export const getRedirectTarget = async (slug: string) => {
   }
 
   return {
+    id: shortLink.id,
     slug: shortLink.slug,
     originalUrl: shortLink.originalUrl,
+  };
+};
+
+export const recordClickEvent = async (input: RecordClickInput) => {
+  await prisma.clickEvent.create({
+    data: {
+      shortLinkId: input.shortLinkId,
+      referrer: normalizeOptionalText(input.referrer),
+      userAgent: normalizeOptionalText(input.userAgent),
+      ipHash: hashIpAddress(input.ipAddress),
+    },
+  });
+};
+
+export const getLinkStats = async (slug: string) => {
+  const shortLink = await prisma.shortLink.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      originalUrl: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!shortLink) {
+    throw new HttpError(404, "Short link not found");
+  }
+
+  const [totalClicks, recentClicks] = await prisma.$transaction([
+    prisma.clickEvent.count({ where: { shortLinkId: shortLink.id } }),
+    prisma.clickEvent.findMany({
+      where: { shortLinkId: shortLink.id },
+      orderBy: { clickedAt: "desc" },
+      take: 10,
+      select: {
+        clickedAt: true,
+        referrer: true,
+        userAgent: true,
+      },
+    }),
+  ]);
+
+  return {
+    slug: shortLink.slug,
+    originalUrl: shortLink.originalUrl,
+    totalClicks,
+    recentClicks,
+    createdAt: shortLink.createdAt,
+    updatedAt: shortLink.updatedAt,
   };
 };

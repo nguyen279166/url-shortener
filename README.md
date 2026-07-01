@@ -24,7 +24,11 @@ GET /:slug
 -> look up the slug in PostgreSQL
 -> return 404 if it does not exist
 -> return 410 if the link is inactive or expired
+-> record a click event
 -> redirect the browser to the original URL with HTTP 302
+
+GET /api/links/:slug/stats
+-> return total clicks and the 10 most recent click events
 ```
 
 Example create request:
@@ -43,7 +47,7 @@ Then open `http://localhost:3000/demo-link` in the browser to test the redirect.
 
 - [x] Create short links
 - [x] Redirect short links to original URLs
-- [ ] Track click analytics
+- [x] Track click analytics
 - [ ] Add Redis caching for redirects
 - [ ] Add rate limiting
 
