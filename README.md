@@ -8,7 +8,7 @@ short links, custom aliases, redirect caching, rate limiting, and click analytic
 - Frontend: React + Vite (planned)
 - API: Node.js, Express, TypeScript
 - Database: PostgreSQL + Prisma
-- Cache: Redis (planned)
+- Cache: Redis
 
 ## Current backend flow
 
@@ -21,7 +21,8 @@ POST /api/links
 -> return the generated short path
 
 GET /:slug
--> look up the slug in PostgreSQL
+-> look up the slug in Redis first
+-> fall back to PostgreSQL and cache the result when Redis misses
 -> return 404 if it does not exist
 -> return 410 if the link is inactive or expired
 -> record a click event
@@ -48,7 +49,7 @@ Then open `http://localhost:3000/demo-link` in the browser to test the redirect.
 - [x] Create short links
 - [x] Redirect short links to original URLs
 - [x] Track click analytics
-- [ ] Add Redis caching for redirects
+- [x] Add Redis caching for redirects
 - [ ] Add rate limiting
 
 ## Local development

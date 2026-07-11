@@ -2,6 +2,11 @@ import { createHash, randomInt } from "node:crypto";
 
 import type { Prisma } from "../generated/prisma/client.js";
 import prisma from "../lib/prisma.js";
+import {
+  deleteCacheValue,
+  getCacheValue,
+  setCacheValue,
+} from "../lib/redis.js";
 import { HttpError } from "../middleware/error.middleware.js";
 import type {
   CreateLinkInput,
@@ -13,6 +18,8 @@ const SLUG_ALPHABET =
   "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const GENERATED_SLUG_LENGTH = 7;
 const MAX_SLUG_GENERATION_ATTEMPTS = 5;
+const REDIRECT_CACHE_PREFIX = "redirect:";
+const REDIRECT_CACHE_TTL_SECONDS = 300;
 
 type RecordClickInput = {
   shortLinkId: string;
@@ -32,6 +39,70 @@ type ShortLinkForResponse = {
   _count?: {
     clicks: number;
   };
+};
+
+type RedirectTarget = {
+  id: string;
+  slug: string;
+  originalUrl: string;
+};
+
+const getRedirectCacheKey = (slug: string) =>
+  `${REDIRECT_CACHE_PREFIX}${slug}`;
+
+const parseCachedRedirectTarget = (value: string): RedirectTarget | null => {
+  try {
+    const target: unknown = JSON.parse(value);
+
+    if (
+      typeof target === "object" &&
+      target !== null &&
+      "id" in target &&
+      typeof target.id === "string" &&
+      "slug" in target &&
+      typeof target.slug === "string" &&
+      "originalUrl" in target &&
+      typeof target.originalUrl === "string"
+    ) {
+      return target as RedirectTarget;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const getCachedRedirectTarget = async (slug: string) => {
+  const cachedValue = await getCacheValue(getRedirectCacheKey(slug));
+
+  if (!cachedValue) {
+    return null;
+  }
+
+  const target = parseCachedRedirectTarget(cachedValue);
+
+  return target?.slug === slug ? target : null;
+};
+
+const cacheRedirectTarget = async (
+  target: RedirectTarget,
+  expiresAt: Date | null,
+) => {
+  const secondsUntilExpiry = expiresAt
+    ? Math.floor((expiresAt.getTime() - Date.now()) / 1_000)
+    : REDIRECT_CACHE_TTL_SECONDS;
+  const ttlSeconds = Math.min(REDIRECT_CACHE_TTL_SECONDS, secondsUntilExpiry);
+
+  if (ttlSeconds < 1) {
+    return;
+  }
+
+  await setCacheValue(
+    getRedirectCacheKey(target.slug),
+    JSON.stringify(target),
+    ttlSeconds,
+  );
 };
 
 const generateRandomSlug = () => {
@@ -173,10 +244,18 @@ export const updateShortLink = async (slug: string, input: UpdateLinkInput) => {
     data,
   });
 
+  await deleteCacheValue(getRedirectCacheKey(slug));
+
   return formatShortLink(updatedLink);
 };
 
 export const getRedirectTarget = async (slug: string) => {
+  const cachedTarget = await getCachedRedirectTarget(slug);
+
+  if (cachedTarget) {
+    return cachedTarget;
+  }
+
   const shortLink = await prisma.shortLink.findUnique({ where: { slug } });
 
   if (!shortLink) {
@@ -191,11 +270,15 @@ export const getRedirectTarget = async (slug: string) => {
     throw new HttpError(410, "Short link has expired");
   }
 
-  return {
+  const target = {
     id: shortLink.id,
     slug: shortLink.slug,
     originalUrl: shortLink.originalUrl,
   };
+
+  await cacheRedirectTarget(target, shortLink.expiresAt);
+
+  return target;
 };
 
 export const recordClickEvent = async (input: RecordClickInput) => {
