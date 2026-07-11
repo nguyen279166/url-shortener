@@ -38,4 +38,12 @@ describe("API", () => {
     expect(response.body).toHaveProperty("message", "Invalid request body");
     expect(response.body).toHaveProperty("errors.limit");
   });
+
+  it("rejects empty link updates with status 400", async () => {
+    const response = await request(app).patch("/api/links/demo-link").send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("message", "Invalid request body");
+    expect(response.body).toHaveProperty("errors.fields");
+  });
 });

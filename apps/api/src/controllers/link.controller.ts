@@ -6,11 +6,13 @@ import {
   getRedirectTarget,
   listShortLinks,
   recordClickEvent,
+  updateShortLink,
 } from "../services/link.service.js";
 import {
   createLinkSchema,
   listLinksQuerySchema,
   linkSlugParamsSchema,
+  updateLinkSchema,
 } from "../validation/link.schema.js";
 
 export const createLink = async (request: Request, response: Response) => {
@@ -25,6 +27,14 @@ export const listLinks = async (request: Request, response: Response) => {
   const result = await listShortLinks(query);
 
   response.status(200).json({ data: result.links, pagination: result.pagination });
+};
+
+export const updateLink = async (request: Request, response: Response) => {
+  const { slug } = linkSlugParamsSchema.parse(request.params);
+  const input = updateLinkSchema.parse(request.body);
+  const link = await updateShortLink(slug, input);
+
+  response.status(200).json({ data: link });
 };
 
 export const redirectLink = async (request: Request, response: Response) => {

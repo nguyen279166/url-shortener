@@ -6,6 +6,7 @@ import { HttpError } from "../middleware/error.middleware.js";
 import type {
   CreateLinkInput,
   ListLinksQueryInput,
+  UpdateLinkInput,
 } from "../validation/link.schema.js";
 
 const SLUG_ALPHABET =
@@ -18,6 +19,19 @@ type RecordClickInput = {
   referrer?: string | undefined;
   userAgent?: string | undefined;
   ipAddress?: string | undefined;
+};
+
+type ShortLinkForResponse = {
+  id: string;
+  slug: string;
+  originalUrl: string;
+  isActive: boolean;
+  expiresAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: {
+    clicks: number;
+  };
 };
 
 const generateRandomSlug = () => {
@@ -59,6 +73,18 @@ const hashIpAddress = (ipAddress: string | undefined) => {
   return createHash("sha256").update(normalizedIpAddress).digest("hex");
 };
 
+const formatShortLink = (shortLink: ShortLinkForResponse) => ({
+  id: shortLink.id,
+  slug: shortLink.slug,
+  originalUrl: shortLink.originalUrl,
+  shortPath: `/${shortLink.slug}`,
+  isActive: shortLink.isActive,
+  expiresAt: shortLink.expiresAt,
+  ...(shortLink._count ? { totalClicks: shortLink._count.clicks } : {}),
+  createdAt: shortLink.createdAt,
+  updatedAt: shortLink.updatedAt,
+});
+
 export const createShortLink = async (input: CreateLinkInput) => {
   const slug = input.customAlias ?? (await generateUniqueSlug());
 
@@ -78,16 +104,7 @@ export const createShortLink = async (input: CreateLinkInput) => {
     },
   });
 
-  return {
-    id: shortLink.id,
-    slug: shortLink.slug,
-    originalUrl: shortLink.originalUrl,
-    shortPath: `/${shortLink.slug}`,
-    isActive: shortLink.isActive,
-    expiresAt: shortLink.expiresAt,
-    createdAt: shortLink.createdAt,
-    updatedAt: shortLink.updatedAt,
-  };
+  return formatShortLink(shortLink);
 };
 
 export const listShortLinks = async (input: ListLinksQueryInput) => {
@@ -124,17 +141,7 @@ export const listShortLinks = async (input: ListLinksQueryInput) => {
   ]);
 
   return {
-    links: links.map((link) => ({
-      id: link.id,
-      slug: link.slug,
-      originalUrl: link.originalUrl,
-      shortPath: `/${link.slug}`,
-      isActive: link.isActive,
-      expiresAt: link.expiresAt,
-      totalClicks: link._count.clicks,
-      createdAt: link.createdAt,
-      updatedAt: link.updatedAt,
-    })),
+    links: links.map((link) => formatShortLink(link)),
     pagination: {
       page: input.page,
       limit: input.limit,
@@ -142,6 +149,31 @@ export const listShortLinks = async (input: ListLinksQueryInput) => {
       totalPages: Math.ceil(totalItems / input.limit),
     },
   };
+};
+
+export const updateShortLink = async (slug: string, input: UpdateLinkInput) => {
+  const existingLink = await prisma.shortLink.findUnique({ where: { slug } });
+
+  if (!existingLink) {
+    throw new HttpError(404, "Short link not found");
+  }
+
+  const data: Prisma.ShortLinkUpdateInput = {};
+
+  if (input.isActive !== undefined) {
+    data.isActive = input.isActive;
+  }
+
+  if (input.expiresAt !== undefined) {
+    data.expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
+  }
+
+  const updatedLink = await prisma.shortLink.update({
+    where: { slug },
+    data,
+  });
+
+  return formatShortLink(updatedLink);
 };
 
 export const getRedirectTarget = async (slug: string) => {

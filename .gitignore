@@ -10,3 +10,5 @@ coverage/
 .idea/
 .vscode/
 apps/api/src/generated/prisma/
+.postman/
+postman/

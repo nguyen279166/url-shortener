@@ -78,8 +78,8 @@ pnpm db:stop
 ## Commands
 
 ```powershell
-pnpm build
 pnpm lint
 pnpm test
 pnpm typecheck
+pnpm build
 ```

@@ -50,6 +50,22 @@ export const listLinksQuerySchema = z
 
 export type ListLinksQueryInput = z.infer<typeof listLinksQuerySchema>;
 
+export const updateLinkSchema = z
+  .object({
+    isActive: z.boolean().optional(),
+    expiresAt: z.union([futureDatetimeSchema, z.null()]).optional(),
+  })
+  .strict()
+  .refine(
+    (value) => value.isActive !== undefined || value.expiresAt !== undefined,
+    {
+      message: "At least one field is required",
+      path: ["fields"],
+    },
+  );
+
+export type UpdateLinkInput = z.infer<typeof updateLinkSchema>;
+
 export const linkSlugParamsSchema = z.object({
   slug: z
     .string()
