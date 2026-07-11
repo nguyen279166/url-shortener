@@ -22,11 +22,12 @@ const futureDatetimeSchema = z.iso.datetime().refine(
 
 export const createLinkSchema = z
   .object({
-    url: z.url().refine((value) => {
-      const url = new URL(value);
-
-      return url.protocol === "http:" || url.protocol === "https:";
-    }, "URL must start with http:// or https://"),
+    url: z
+      .url()
+      .refine(
+        (value) => /^https?:\/\//i.test(value),
+        "URL must start with http:// or https://",
+      ),
     customAlias: customAliasSchema,
     expiresAt: futureDatetimeSchema.optional(),
   })

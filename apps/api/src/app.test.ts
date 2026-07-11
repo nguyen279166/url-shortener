@@ -19,4 +19,15 @@ describe("API", () => {
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ message: "Route not found" });
   });
+
+  it.each([
+    { url: "abc", customAlias: "bad-url-01" },
+    { url: "example.com", customAlias: "no-protocol-01" },
+  ])("rejects an invalid URL with status 400", async (body) => {
+    const response = await request(app).post("/api/links").send(body);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("message", "Invalid request body");
+    expect(response.body).toHaveProperty("errors.url");
+  });
 });
