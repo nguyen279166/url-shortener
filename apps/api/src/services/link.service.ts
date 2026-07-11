@@ -1,8 +1,12 @@
 import { createHash, randomInt } from "node:crypto";
 
+import type { Prisma } from "../generated/prisma/client.js";
 import prisma from "../lib/prisma.js";
 import { HttpError } from "../middleware/error.middleware.js";
-import type { CreateLinkInput } from "../validation/link.schema.js";
+import type {
+  CreateLinkInput,
+  ListLinksQueryInput,
+} from "../validation/link.schema.js";
 
 const SLUG_ALPHABET =
   "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -83,6 +87,60 @@ export const createShortLink = async (input: CreateLinkInput) => {
     expiresAt: shortLink.expiresAt,
     createdAt: shortLink.createdAt,
     updatedAt: shortLink.updatedAt,
+  };
+};
+
+export const listShortLinks = async (input: ListLinksQueryInput) => {
+  const where: Prisma.ShortLinkWhereInput = input.search
+    ? {
+        OR: [
+          { slug: { contains: input.search, mode: "insensitive" } },
+          { originalUrl: { contains: input.search, mode: "insensitive" } },
+        ],
+      }
+    : {};
+  const skip = (input.page - 1) * input.limit;
+
+  const [totalItems, links] = await prisma.$transaction([
+    prisma.shortLink.count({ where }),
+    prisma.shortLink.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: input.limit,
+      select: {
+        id: true,
+        slug: true,
+        originalUrl: true,
+        isActive: true,
+        expiresAt: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: { clicks: true },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    links: links.map((link) => ({
+      id: link.id,
+      slug: link.slug,
+      originalUrl: link.originalUrl,
+      shortPath: `/${link.slug}`,
+      isActive: link.isActive,
+      expiresAt: link.expiresAt,
+      totalClicks: link._count.clicks,
+      createdAt: link.createdAt,
+      updatedAt: link.updatedAt,
+    })),
+    pagination: {
+      page: input.page,
+      limit: input.limit,
+      totalItems,
+      totalPages: Math.ceil(totalItems / input.limit),
+    },
   };
 };
 

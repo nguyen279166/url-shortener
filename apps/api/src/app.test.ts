@@ -30,4 +30,12 @@ describe("API", () => {
     expect(response.body).toHaveProperty("message", "Invalid request body");
     expect(response.body).toHaveProperty("errors.url");
   });
+
+  it("rejects invalid list links query params with status 400", async () => {
+    const response = await request(app).get("/api/links?limit=abc");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("message", "Invalid request body");
+    expect(response.body).toHaveProperty("errors.limit");
+  });
 });

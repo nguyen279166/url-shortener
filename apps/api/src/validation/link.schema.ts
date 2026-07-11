@@ -35,6 +35,21 @@ export const createLinkSchema = z
 
 export type CreateLinkInput = z.infer<typeof createLinkSchema>;
 
+const optionalSearchSchema = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().min(1).max(200).optional(),
+);
+
+export const listLinksQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+    search: optionalSearchSchema,
+  })
+  .strict();
+
+export type ListLinksQueryInput = z.infer<typeof listLinksQuerySchema>;
+
 export const linkSlugParamsSchema = z.object({
   slug: z
     .string()
