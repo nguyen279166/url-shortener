@@ -222,6 +222,23 @@ export const listShortLinks = async (input: ListLinksQueryInput) => {
   };
 };
 
+export const getShortLinkBySlug = async (slug: string) => {
+  const shortLink = await prisma.shortLink.findUnique({
+    where: { slug },
+    include: {
+      _count: {
+        select: { clicks: true },
+      },
+    },
+  });
+
+  if (!shortLink) {
+    throw new HttpError(404, "Short link not found");
+  }
+
+  return formatShortLink(shortLink);
+};
+
 export const updateShortLink = async (slug: string, input: UpdateLinkInput) => {
   const existingLink = await prisma.shortLink.findUnique({ where: { slug } });
 

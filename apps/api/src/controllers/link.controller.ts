@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 
 import {
   createShortLink,
+  getShortLinkBySlug,
   getLinkStats,
   getRedirectTarget,
   listShortLinks,
@@ -27,6 +28,13 @@ export const listLinks = async (request: Request, response: Response) => {
   const result = await listShortLinks(query);
 
   response.status(200).json({ data: result.links, pagination: result.pagination });
+};
+
+export const getLink = async (request: Request, response: Response) => {
+  const { slug } = linkSlugParamsSchema.parse(request.params);
+  const link = await getShortLinkBySlug(slug);
+
+  response.status(200).json({ data: link });
 };
 
 export const updateLink = async (request: Request, response: Response) => {

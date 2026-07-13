@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   createLink,
+  getLink,
   getLinkAnalytics,
   listLinks,
   updateLink,
@@ -13,3 +14,4 @@ linkRouter.get("/", listLinks);
 linkRouter.post("/", createLink);
 linkRouter.patch("/:slug", updateLink);
 linkRouter.get("/:slug/stats", getLinkAnalytics);
+linkRouter.get("/:slug", getLink);

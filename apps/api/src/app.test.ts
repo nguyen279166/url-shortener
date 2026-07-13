@@ -46,4 +46,12 @@ describe("API", () => {
     expect(response.body).toHaveProperty("message", "Invalid request body");
     expect(response.body).toHaveProperty("errors.fields");
   });
+
+  it("rejects an invalid slug before querying the database", async () => {
+    const response = await request(app).get("/api/links/bad!slug");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("message", "Invalid request body");
+    expect(response.body).toHaveProperty("errors.slug");
+  });
 });
