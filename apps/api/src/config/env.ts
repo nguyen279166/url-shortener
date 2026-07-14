@@ -8,6 +8,9 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().min(1).optional(),
   REDIS_URL: z.url().optional(),
+  CREATE_LINK_RATE_LIMIT: z.coerce.number().int().positive().default(10),
+  RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
+  TRUST_PROXY_HOPS: z.coerce.number().int().positive().default(1),
 });
 
 const result = envSchema.safeParse(process.env);

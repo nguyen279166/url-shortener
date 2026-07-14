@@ -4,7 +4,7 @@ import { env } from "../config/env.js";
 
 const REDIS_RETRY_DELAY_MS = 30_000;
 
-const redisClient = env.REDIS_URL
+const redisClient = env.REDIS_URL && env.NODE_ENV !== "test"
   ? createClient({
       url: env.REDIS_URL,
       socket: {
@@ -89,5 +89,40 @@ export const deleteCacheValue = async (key: string) => {
     await redisClient.del(key);
   } catch (error) {
     console.warn("Could not delete from Redis:", error);
+  }
+};
+
+export type RateLimitResult = {
+  count: number;
+  ttlSeconds: number;
+};
+
+export const consumeRateLimit = async (
+  key: string,
+  windowSeconds: number,
+): Promise<RateLimitResult | null> => {
+  if (!(await ensureRedisConnection()) || !redisClient) {
+    return null;
+  }
+
+  try {
+    const [count, , ttlSeconds] = await redisClient
+      .multi()
+      .incr(key)
+      .expire(key, windowSeconds, "NX")
+      .ttl(key)
+      .exec();
+
+    if (typeof count !== "number" || typeof ttlSeconds !== "number") {
+      return null;
+    }
+
+    return {
+      count,
+      ttlSeconds: Math.max(ttlSeconds, 1),
+    };
+  } catch (error) {
+    console.warn("Could not update the Redis rate limit counter:", error);
+    return null;
   }
 };
