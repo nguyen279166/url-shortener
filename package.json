@@ -4,7 +4,9 @@
   "private": true,
   "packageManager": "pnpm@10.20.0",
   "scripts": {
-    "dev": "pnpm --filter @url-shortener/api dev",
+    "dev": "pnpm --parallel --filter @url-shortener/api --filter @url-shortener/web dev",
+    "dev:api": "pnpm --filter @url-shortener/api dev",
+    "dev:web": "pnpm --filter @url-shortener/web dev",
     "build": "pnpm -r build",
     "db:start": "docker compose up -d",
     "db:stop": "docker compose down",
