@@ -11,7 +11,7 @@ import { Link } from "react-router";
 
 import {
   ApiError,
-  API_URL,
+  SHORT_URL_BASE,
   createShortLink,
   getShortUrl,
   getVersionedShortUrl,
@@ -99,7 +99,7 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
     }
   };
 
-  const apiHost = new URL(API_URL).host;
+  const shortUrlHost = new URL(SHORT_URL_BASE).host;
 
   return (
     <section className="create-panel" id="create" aria-labelledby="create-title">
@@ -138,7 +138,7 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
             Custom alias <span>optional</span>
           </label>
           <div className="alias-input">
-            <span aria-hidden="true">{apiHost}/</span>
+            <span aria-hidden="true">{shortUrlHost}/</span>
             <input
               id="custom-alias"
               name="customAlias"

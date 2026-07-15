@@ -8,9 +8,23 @@ import type {
   UpdateLinkInput,
 } from "../types/link";
 
-const configuredApiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+const LOCAL_API_URL = "http://localhost:3000";
+const PRODUCTION_SHORT_URL_BASE =
+  "https://slug-url-shortener-api.onrender.com";
+
+const browserOrigin =
+  typeof window === "undefined"
+    ? PRODUCTION_SHORT_URL_BASE
+    : window.location.origin;
+const configuredApiUrl = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL ?? LOCAL_API_URL)
+  : browserOrigin;
+const configuredShortUrlBase =
+  import.meta.env.VITE_SHORT_BASE_URL ??
+  (import.meta.env.DEV ? configuredApiUrl : PRODUCTION_SHORT_URL_BASE);
 
 export const API_URL = configuredApiUrl.replace(/\/$/, "");
+export const SHORT_URL_BASE = configuredShortUrlBase.replace(/\/$/, "");
 
 type ErrorPayload = {
   message?: string;
@@ -136,10 +150,10 @@ export const getApiHealth = async () => {
 };
 
 export const getShortUrl = (shortPath: string) =>
-  new URL(shortPath, `${API_URL}/`).toString();
+  new URL(shortPath, `${SHORT_URL_BASE}/`).toString();
 
 export const getVersionedShortUrl = (shortPath: string, updatedAt: string) => {
-  const url = new URL(shortPath, `${API_URL}/`);
+  const url = new URL(shortPath, `${SHORT_URL_BASE}/`);
   const updatedTime = new Date(updatedAt).getTime();
 
   url.searchParams.set(
