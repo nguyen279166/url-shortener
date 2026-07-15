@@ -22,7 +22,10 @@ describe("API", () => {
     const response = await request(app).get("/api/health");
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ status: "ok" });
+    expect(response.body).toMatchObject({
+      status: "ok",
+      revision: "local",
+    });
   });
 
   it("returns JSON for unknown routes", async () => {

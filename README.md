@@ -90,7 +90,7 @@ All management endpoints are owner-scoped and require a valid session cookie.
 
 | Method | Path | Authentication | Purpose |
 | --- | --- | --- | --- |
-| GET | <code>/api/health</code> | Public | API liveness |
+| GET | <code>/api/health</code> | Public | API liveness and deployed revision |
 | ALL | <code>/api/google-callback/auth/*</code> | Public | Better Auth handlers |
 | GET | <code>/:slug</code> | Public | Resolve and record a redirect |
 | GET | <code>/api/dashboard</code> | Required | Per-user dashboard metrics |
