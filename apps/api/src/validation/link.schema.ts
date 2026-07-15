@@ -75,6 +75,5 @@ export const linkSlugParamsSchema = z.object({
     .regex(
       /^[a-zA-Z0-9_-]+$/,
       "Slug can only contain letters, numbers, dashes, and underscores",
-    )
-    .transform((value) => value.toLowerCase()),
+    ),
 });

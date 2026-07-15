@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type { RequestHandler } from "express";
 
+import { getClientIp } from "../lib/client-ip.js";
 import {
   consumeRateLimit,
   type RateLimitResult,
@@ -19,8 +20,8 @@ type RateLimiterOptions = {
   consume?: RateLimitStore;
 };
 
-const hashClientIp = (ipAddress: string) =>
-  createHash("sha256").update(ipAddress).digest("hex");
+const hashRateLimitSubject = (subject: string) =>
+  createHash("sha256").update(subject).digest("hex");
 
 export const createRateLimiter = ({
   keyPrefix,
@@ -29,14 +30,17 @@ export const createRateLimiter = ({
   consume = consumeRateLimit,
 }: RateLimiterOptions): RequestHandler =>
   async (request, response, next) => {
-    const clientIp = request.ip ?? request.socket.remoteAddress;
+    // Authenticated routes are limited by the stable user id, which cannot be
+    // bypassed by changing a forwarded-IP header. The IP fallback keeps this
+    // middleware reusable for public routes.
+    const subject = request.auth?.userId ?? getClientIp(request);
 
-    if (!clientIp) {
+    if (!subject) {
       next();
       return;
     }
 
-    const key = `rate-limit:${keyPrefix}:${hashClientIp(clientIp)}`;
+    const key = `rate-limit:${keyPrefix}:${hashRateLimitSubject(subject)}`;
     const result = await consume(key, windowSeconds);
 
     if (!result) {

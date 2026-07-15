@@ -14,8 +14,7 @@ import type {
   UpdateLinkInput,
 } from "../validation/link.schema.js";
 
-const SLUG_ALPHABET =
-  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const SLUG_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
 const GENERATED_SLUG_LENGTH = 7;
 const MAX_SLUG_GENERATION_ATTEMPTS = 5;
 const REDIRECT_CACHE_PREFIX = "redirect:";

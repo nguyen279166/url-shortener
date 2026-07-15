@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { getClientIp } from "../lib/client-ip.js";
 import { HttpError } from "../middleware/error.middleware.js";
 import {
   createShortLink,
@@ -79,7 +80,7 @@ export const redirectLink = async (request: Request, response: Response) => {
     shortLinkId: target.id,
     referrer: request.get("referer") ?? request.get("referrer"),
     userAgent: request.get("user-agent"),
-    ipAddress: request.ip,
+    ipAddress: getClientIp(request),
   });
 
   response.redirect(302, target.originalUrl);

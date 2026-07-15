@@ -34,6 +34,16 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: "url-shortener",
+    ipAddress: {
+      // Production auth traffic reaches Render through the Vercel rewrite.
+      // Vercel overwrites this header with the connecting client's public IP,
+      // so Better Auth can rate-limit users independently instead of sharing
+      // one fallback bucket for every request.
+      ipAddressHeaders:
+        env.NODE_ENV === "production"
+          ? ["x-vercel-forwarded-for"]
+          : ["x-forwarded-for"],
+    },
     database: {
       generateId: "uuid",
     },

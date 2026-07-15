@@ -78,6 +78,34 @@ beforeEach(() => {
 });
 
 describe("link service owner scoping", () => {
+  it("generates lowercase slugs that survive route normalization", async () => {
+    prismaMocks.shortLinkFindUnique.mockResolvedValue(null);
+    prismaMocks.shortLinkCreate.mockImplementation(
+      ({ data }: { data: { slug: string; originalUrl: string } }) =>
+        Promise.resolve({
+          ...shortLink,
+          slug: data.slug,
+          originalUrl: data.originalUrl,
+        }),
+    );
+
+    const generatedSlugs: string[] = [];
+
+    for (let index = 0; index < 20; index += 1) {
+      const result = await createShortLink(OWNER_ID, {
+        url: `https://example.com/generated/${index}`,
+      });
+
+      generatedSlugs.push(result.slug);
+    }
+
+    expect(generatedSlugs).toHaveLength(20);
+
+    for (const slug of generatedSlugs) {
+      expect(slug).toMatch(/^[a-z0-9]{7}$/);
+    }
+  });
+
   it("stores the signed-in owner when creating a link", async () => {
     prismaMocks.shortLinkFindUnique.mockResolvedValue(null);
     prismaMocks.shortLinkCreate.mockResolvedValue(shortLink);
