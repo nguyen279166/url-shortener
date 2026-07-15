@@ -17,7 +17,6 @@ import {
   getLinkAnalytics,
   getShortLink,
   getShortUrl,
-  getVersionedShortUrl,
   updateShortLink,
 } from "../lib/api";
 import type { LinkAnalytics, ShortLink } from "../types/link";
@@ -197,10 +196,6 @@ export const LinkDetailPage = () => {
   }
 
   const shortUrl = getShortUrl(link.shortPath);
-  const versionedShortUrl = getVersionedShortUrl(
-    link.shortPath,
-    link.updatedAt,
-  );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   return (
@@ -215,7 +210,7 @@ export const LinkDetailPage = () => {
           <h1>/{link.slug}</h1>
           <a
             className="detail-short-url"
-            href={versionedShortUrl}
+            href={shortUrl}
             target="_blank"
             rel="noreferrer"
           >

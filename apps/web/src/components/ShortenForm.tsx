@@ -14,7 +14,6 @@ import {
   SHORT_URL_BASE,
   createShortLink,
   getShortUrl,
-  getVersionedShortUrl,
 } from "../lib/api";
 import type { ShortLink } from "../types/link";
 
@@ -173,10 +172,7 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
           <div>
             <span className="result-label">Ready to route</span>
             <a
-              href={getVersionedShortUrl(
-                createdLink.shortPath,
-                createdLink.updatedAt,
-              )}
+              href={getShortUrl(createdLink.shortPath)}
               target="_blank"
               rel="noreferrer"
             >

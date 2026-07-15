@@ -151,15 +151,3 @@ export const getApiHealth = async () => {
 
 export const getShortUrl = (shortPath: string) =>
   new URL(shortPath, `${SHORT_URL_BASE}/`).toString();
-
-export const getVersionedShortUrl = (shortPath: string, updatedAt: string) => {
-  const url = new URL(shortPath, `${SHORT_URL_BASE}/`);
-  const updatedTime = new Date(updatedAt).getTime();
-
-  url.searchParams.set(
-    "v",
-    Number.isNaN(updatedTime) ? updatedAt : String(updatedTime),
-  );
-
-  return url.toString();
-};
