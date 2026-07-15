@@ -3,6 +3,7 @@ import { Router } from "express";
 import { env } from "../config/env.js";
 import {
   createLink,
+  deleteLink,
   getLink,
   getLinkAnalytics,
   listLinks,
@@ -20,5 +21,6 @@ const createLinkRateLimiter = createRateLimiter({
 linkRouter.get("/", listLinks);
 linkRouter.post("/", createLinkRateLimiter, createLink);
 linkRouter.patch("/:slug", updateLink);
+linkRouter.delete("/:slug", deleteLink);
 linkRouter.get("/:slug/stats", getLinkAnalytics);
 linkRouter.get("/:slug", getLink);

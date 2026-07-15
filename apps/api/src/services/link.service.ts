@@ -156,7 +156,10 @@ const formatShortLink = (shortLink: ShortLinkForResponse) => ({
   updatedAt: shortLink.updatedAt,
 });
 
-export const createShortLink = async (input: CreateLinkInput) => {
+export const createShortLink = async (
+  ownerId: string,
+  input: CreateLinkInput,
+) => {
   const slug = input.customAlias ?? (await generateUniqueSlug());
 
   if (input.customAlias) {
@@ -172,21 +175,29 @@ export const createShortLink = async (input: CreateLinkInput) => {
       slug,
       originalUrl: input.url,
       expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+      ownerId,
     },
   });
 
   return formatShortLink(shortLink);
 };
 
-export const listShortLinks = async (input: ListLinksQueryInput) => {
-  const where: Prisma.ShortLinkWhereInput = input.search
-    ? {
-        OR: [
-          { slug: { contains: input.search, mode: "insensitive" } },
-          { originalUrl: { contains: input.search, mode: "insensitive" } },
-        ],
-      }
-    : {};
+export const listShortLinks = async (
+  ownerId: string,
+  input: ListLinksQueryInput,
+) => {
+  const where: Prisma.ShortLinkWhereInput = {
+    ownerId,
+    deletedAt: null,
+    ...(input.search
+      ? {
+          OR: [
+            { slug: { contains: input.search, mode: "insensitive" } },
+            { originalUrl: { contains: input.search, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
   const skip = (input.page - 1) * input.limit;
 
   const [totalItems, links] = await prisma.$transaction([
@@ -222,9 +233,9 @@ export const listShortLinks = async (input: ListLinksQueryInput) => {
   };
 };
 
-export const getShortLinkBySlug = async (slug: string) => {
-  const shortLink = await prisma.shortLink.findUnique({
-    where: { slug },
+export const getShortLinkBySlug = async (ownerId: string, slug: string) => {
+  const shortLink = await prisma.shortLink.findFirst({
+    where: { slug, ownerId, deletedAt: null },
     include: {
       _count: {
         select: { clicks: true },
@@ -239,8 +250,14 @@ export const getShortLinkBySlug = async (slug: string) => {
   return formatShortLink(shortLink);
 };
 
-export const updateShortLink = async (slug: string, input: UpdateLinkInput) => {
-  const existingLink = await prisma.shortLink.findUnique({ where: { slug } });
+export const updateShortLink = async (
+  ownerId: string,
+  slug: string,
+  input: UpdateLinkInput,
+) => {
+  const existingLink = await prisma.shortLink.findFirst({
+    where: { slug, ownerId, deletedAt: null },
+  });
 
   if (!existingLink) {
     throw new HttpError(404, "Short link not found");
@@ -257,13 +274,38 @@ export const updateShortLink = async (slug: string, input: UpdateLinkInput) => {
   }
 
   const updatedLink = await prisma.shortLink.update({
-    where: { slug },
+    where: { id: existingLink.id },
     data,
   });
 
   await deleteCacheValue(getRedirectCacheKey(slug));
 
   return formatShortLink(updatedLink);
+};
+
+export const deleteShortLink = async (
+  ownerId: string,
+  slug: string,
+  deletedAt = new Date(),
+) => {
+  const existingLink = await prisma.shortLink.findFirst({
+    where: { slug, ownerId, deletedAt: null },
+    select: { id: true },
+  });
+
+  if (!existingLink) {
+    throw new HttpError(404, "Short link not found");
+  }
+
+  await prisma.shortLink.update({
+    where: { id: existingLink.id },
+    data: {
+      deletedAt,
+      isActive: false,
+    },
+  });
+
+  await deleteCacheValue(getRedirectCacheKey(slug));
 };
 
 export const getRedirectTarget = async (slug: string) => {
@@ -277,6 +319,10 @@ export const getRedirectTarget = async (slug: string) => {
 
   if (!shortLink) {
     throw new HttpError(404, "Short link not found");
+  }
+
+  if (shortLink.deletedAt) {
+    throw new HttpError(410, "Short link has been deleted");
   }
 
   if (!shortLink.isActive) {
@@ -309,9 +355,9 @@ export const recordClickEvent = async (input: RecordClickInput) => {
   });
 };
 
-export const getLinkStats = async (slug: string) => {
-  const shortLink = await prisma.shortLink.findUnique({
-    where: { slug },
+export const getLinkStats = async (ownerId: string, slug: string) => {
+  const shortLink = await prisma.shortLink.findFirst({
+    where: { slug, ownerId, deletedAt: null },
     select: {
       id: true,
       slug: true,

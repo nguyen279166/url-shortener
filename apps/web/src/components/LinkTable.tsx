@@ -1,7 +1,7 @@
 import { ArrowUpRight, LoaderCircle, Settings2 } from "lucide-react";
 import { Link } from "react-router";
 
-import { getShortUrl } from "../lib/api";
+import { getVersionedShortUrl } from "../lib/api";
 import type { ShortLink } from "../types/link";
 import { formatDate, formatDestination } from "../utils/link";
 import { LinkStatus } from "./LinkStatus";
@@ -52,7 +52,7 @@ export const LinkTable = ({
     return (
       <div className="links-state">
         <p>{emptyMessage}</p>
-        <Link to="/#create">Create a route</Link>
+        <Link to="/new">Create a route</Link>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export const LinkTable = ({
               <Link to={`/links/${encodeURIComponent(link.slug)}`}>/{link.slug}</Link>
               <a
                 className="redirect-link"
-                href={getShortUrl(link.shortPath)}
+                href={getVersionedShortUrl(link.shortPath, link.updatedAt)}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`Open redirect ${link.slug} in a new tab`}

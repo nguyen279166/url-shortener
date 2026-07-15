@@ -1,5 +1,6 @@
 import type {
   CreateLinkInput,
+  DashboardData,
   LinkAnalytics,
   ListLinksParams,
   Pagination,
@@ -35,7 +36,10 @@ export class ApiError extends Error {
 }
 
 const request = async <T>(path: string, init?: RequestInit) => {
-  const response = await fetch(`${API_URL}${path}`, init);
+  const response = await fetch(`${API_URL}${path}`, {
+    ...init,
+    credentials: "include",
+  });
   const payload: unknown = await response.json();
 
   if (!response.ok) {
@@ -98,10 +102,31 @@ export const updateShortLink = async (
   return response.data;
 };
 
+export const deleteShortLink = async (slug: string) => {
+  const response = await fetch(
+    `${API_URL}/api/links/${encodeURIComponent(slug)}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as ErrorPayload;
+    throw new ApiError(response.status, payload);
+  }
+};
+
 export const getLinkAnalytics = async (slug: string) => {
   const response = await request<{ data: LinkAnalytics }>(
     `/api/links/${encodeURIComponent(slug)}/stats`,
   );
+
+  return response.data;
+};
+
+export const getDashboard = async () => {
+  const response = await request<{ data: DashboardData }>("/api/dashboard");
 
   return response.data;
 };
@@ -112,3 +137,15 @@ export const getApiHealth = async () => {
 
 export const getShortUrl = (shortPath: string) =>
   new URL(shortPath, `${API_URL}/`).toString();
+
+export const getVersionedShortUrl = (shortPath: string, updatedAt: string) => {
+  const url = new URL(shortPath, `${API_URL}/`);
+  const updatedTime = new Date(updatedAt).getTime();
+
+  url.searchParams.set(
+    "v",
+    Number.isNaN(updatedTime) ? updatedAt : String(updatedTime),
+  );
+
+  return url.toString();
+};

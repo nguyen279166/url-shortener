@@ -47,3 +47,18 @@ export type LinkAnalytics = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type DailyClicks = {
+  date: string;
+  clicks: number;
+};
+
+export type DashboardData = {
+  totalLinks: number;
+  activeLinks: number;
+  totalClicks: number;
+  clicksLast7Days: number;
+  dailyClicks: DailyClicks[];
+  topLinks: ShortLink[];
+  recentLinks: ShortLink[];
+};

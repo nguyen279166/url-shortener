@@ -7,17 +7,86 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id            String      @id @default(uuid()) @db.Uuid
+  name          String      @db.Text
+  email         String      @unique @db.VarChar(320)
+  emailVerified Boolean     @default(false)
+  image         String?     @db.Text
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @db.Timestamptz(3)
+  sessions      Session[]
+  accounts      Account[]
+  shortLinks    ShortLink[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  expiresAt DateTime @db.Timestamptz(3)
+  token     String   @unique @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?  @db.Text
+  userAgent String?  @db.Text
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  accountId             String    @db.Text
+  providerId            String    @db.VarChar(100)
+  userId                String    @db.Uuid
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String   @db.Text
+  value      String   @db.Text
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
 model ShortLink {
   id          String       @id @default(uuid()) @db.Uuid
   slug        String       @unique @db.VarChar(64)
   originalUrl String       @db.Text
   isActive    Boolean      @default(true)
   expiresAt   DateTime?    @db.Timestamptz(3)
+  deletedAt   DateTime?    @db.Timestamptz(3)
   createdAt   DateTime     @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  ownerId     String?      @db.Uuid
+  owner       User?        @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   clicks      ClickEvent[]
 
   @@index([createdAt])
+  @@index([ownerId, createdAt])
+  @@index([ownerId, deletedAt, createdAt])
   @@map("short_links")
 }
 

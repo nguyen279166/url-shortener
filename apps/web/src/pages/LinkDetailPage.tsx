@@ -5,15 +5,19 @@ import {
   CalendarClock,
   LoaderCircle,
   RefreshCw,
+  Trash2,
+  TriangleAlert,
 } from "lucide-react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 
 import { LinkStatus } from "../components/LinkStatus";
 import {
   ApiError,
+  deleteShortLink,
   getLinkAnalytics,
   getShortLink,
   getShortUrl,
+  getVersionedShortUrl,
   updateShortLink,
 } from "../lib/api";
 import type { LinkAnalytics, ShortLink } from "../types/link";
@@ -23,8 +27,11 @@ import {
   toDatetimeLocalValue,
 } from "../utils/link";
 
+type MessageTone = "success" | "error";
+
 export const LinkDetailPage = () => {
   const { slug = "" } = useParams();
+  const navigate = useNavigate();
   const [link, setLink] = useState<ShortLink | null>(null);
   const [stats, setStats] = useState<LinkAnalytics | null>(null);
   const [expiresAt, setExpiresAt] = useState("");
@@ -32,8 +39,14 @@ export const LinkDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isSavingExpiry, setIsSavingExpiry] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [settingsMessage, setSettingsMessage] = useState("");
+  const [settingsMessageTone, setSettingsMessageTone] =
+    useState<MessageTone>("success");
 
   useEffect(() => {
     let shouldIgnore = false;
@@ -95,12 +108,14 @@ export const LinkDetailPage = () => {
       setSettingsMessage(
         `Redirect ${updated.isActive ? "activated" : "paused"}. Cache invalidated.`,
       );
+      setSettingsMessageTone("success");
     } catch (caughtError) {
       setSettingsMessage(
         caughtError instanceof ApiError
           ? caughtError.message
           : "The redirect status could not be updated.",
       );
+      setSettingsMessageTone("error");
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -124,14 +139,37 @@ export const LinkDetailPage = () => {
       setSettingsMessage(
         updated.expiresAt ? "Expiration updated." : "Expiration removed.",
       );
+      setSettingsMessageTone("success");
     } catch (caughtError) {
       setSettingsMessage(
         caughtError instanceof ApiError
           ? caughtError.message
           : "The expiration could not be updated.",
       );
+      setSettingsMessageTone("error");
     } finally {
       setIsSavingExpiry(false);
+    }
+  };
+
+  const handleDeleteSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!link || deleteConfirmation.trim() !== link.slug) return;
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deleteShortLink(link.slug);
+      navigate("/links", { replace: true });
+    } catch (caughtError) {
+      setDeleteError(
+        caughtError instanceof ApiError
+          ? caughtError.message
+          : "The link could not be deleted. Please try again.",
+      );
+      setIsDeleting(false);
     }
   };
 
@@ -159,6 +197,10 @@ export const LinkDetailPage = () => {
   }
 
   const shortUrl = getShortUrl(link.shortPath);
+  const versionedShortUrl = getVersionedShortUrl(
+    link.shortPath,
+    link.updatedAt,
+  );
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   return (
@@ -173,7 +215,7 @@ export const LinkDetailPage = () => {
           <h1>/{link.slug}</h1>
           <a
             className="detail-short-url"
-            href={shortUrl}
+            href={versionedShortUrl}
             target="_blank"
             rel="noreferrer"
           >
@@ -262,7 +304,106 @@ export const LinkDetailPage = () => {
             </div>
           </form>
 
-          <p className="settings-message" aria-live="polite">
+          <section className="danger-zone" aria-labelledby="delete-link-title">
+            <div className="danger-zone-heading">
+              <div>
+                <span className="section-index">Danger zone</span>
+                <h3 id="delete-link-title">Delete this link</h3>
+                <p>
+                  Remove this route from your workspace and stop all future
+                  redirects. This action cannot be undone.
+                </p>
+              </div>
+
+              {!isConfirmingDelete ? (
+                <button
+                  className="danger-zone-trigger"
+                  type="button"
+                  onClick={() => {
+                    setIsConfirmingDelete(true);
+                    setDeleteError("");
+                  }}
+                >
+                  <Trash2 aria-hidden="true" />
+                  Delete link
+                </button>
+              ) : null}
+            </div>
+
+            {isConfirmingDelete ? (
+              <form className="delete-confirmation" onSubmit={handleDeleteSubmit}>
+                <TriangleAlert aria-hidden="true" />
+                <div>
+                  <label htmlFor="delete-confirmation">
+                    Type <strong>{link.slug}</strong> to confirm
+                  </label>
+                  <input
+                    id="delete-confirmation"
+                    type="text"
+                    value={deleteConfirmation}
+                    onChange={(event) =>
+                      setDeleteConfirmation(event.target.value)
+                    }
+                    autoComplete="off"
+                    spellCheck={false}
+                    autoFocus
+                    disabled={isDeleting}
+                    aria-describedby="delete-link-help"
+                  />
+                  <p id="delete-link-help">
+                    The short route and its analytics will no longer be available
+                    in your workspace.
+                  </p>
+
+                  {deleteError ? (
+                    <p className="delete-error" role="alert">
+                      {deleteError}
+                    </p>
+                  ) : null}
+
+                  <div className="delete-confirmation-actions">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsConfirmingDelete(false);
+                        setDeleteConfirmation("");
+                        setDeleteError("");
+                      }}
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={
+                        isDeleting || deleteConfirmation.trim() !== link.slug
+                      }
+                    >
+                      {isDeleting ? (
+                        <LoaderCircle className="spin" aria-hidden="true" />
+                      ) : (
+                        <Trash2 aria-hidden="true" />
+                      )}
+                      {isDeleting ? "Deleting..." : `Delete /${link.slug}`}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : null}
+          </section>
+
+          <p
+            className="settings-message"
+            data-tone={settingsMessage ? settingsMessageTone : undefined}
+            role={
+              settingsMessage && settingsMessageTone === "error"
+                ? "alert"
+                : undefined
+            }
+            aria-live={
+              settingsMessageTone === "error" ? "assertive" : "polite"
+            }
+          >
             {settingsMessage}
           </p>
         </div>

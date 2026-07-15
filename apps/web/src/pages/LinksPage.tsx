@@ -6,6 +6,7 @@ import { ApiError, listShortLinks, updateShortLink } from "../lib/api";
 import type { Pagination, ShortLink } from "../types/link";
 
 const PAGE_SIZE = 10;
+type MessageTone = "success" | "error";
 
 const initialPagination: Pagination = {
   page: 1,
@@ -25,6 +26,8 @@ export const LinksPage = () => {
   const [loadError, setLoadError] = useState("");
   const [updatingSlug, setUpdatingSlug] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [actionMessageTone, setActionMessageTone] =
+    useState<MessageTone>("success");
 
   useEffect(() => {
     let shouldIgnore = false;
@@ -95,12 +98,14 @@ export const LinksPage = () => {
       setActionMessage(
         `/${link.slug} is now ${updated.isActive ? "active" : "paused"}.`,
       );
+      setActionMessageTone("success");
     } catch (caughtError) {
       setActionMessage(
         caughtError instanceof ApiError
           ? caughtError.message
           : `Could not update /${link.slug}.`,
       );
+      setActionMessageTone("error");
     } finally {
       setUpdatingSlug("");
     }
@@ -143,7 +148,14 @@ export const LinksPage = () => {
           </form>
         </div>
 
-        <p className="action-message" aria-live="polite">
+        <p
+          className="action-message"
+          data-tone={actionMessage ? actionMessageTone : undefined}
+          role={
+            actionMessage && actionMessageTone === "error" ? "alert" : undefined
+          }
+          aria-live={actionMessageTone === "error" ? "assertive" : "polite"}
+        >
           {actionMessage}
         </p>
 

@@ -1,22 +1,25 @@
 import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
+  ChartNoAxesColumnIncreasing,
   Check,
   Clipboard,
   ExternalLink,
   LoaderCircle,
 } from "lucide-react";
+import { Link } from "react-router";
 
 import {
   ApiError,
   API_URL,
   createShortLink,
   getShortUrl,
+  getVersionedShortUrl,
 } from "../lib/api";
 import type { ShortLink } from "../types/link";
 
 type ShortenFormProps = {
-  onCreated: (link: ShortLink) => void;
+  onCreated?: (link: ShortLink) => void;
 };
 
 const isHttpUrl = (value: string) => {
@@ -64,7 +67,7 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
       setCreatedLink(link);
       setUrl("");
       setCustomAlias("");
-      onCreated(link);
+      onCreated?.(link);
     } catch (caughtError) {
       if (caughtError instanceof ApiError) {
         const fieldError =
@@ -170,7 +173,10 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
           <div>
             <span className="result-label">Ready to route</span>
             <a
-              href={getShortUrl(createdLink.shortPath)}
+              href={getVersionedShortUrl(
+                createdLink.shortPath,
+                createdLink.updatedAt,
+              )}
               target="_blank"
               rel="noreferrer"
             >
@@ -178,14 +184,23 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
               <ExternalLink aria-hidden="true" />
             </a>
           </div>
-          <button type="button" onClick={handleCopy} className="copy-button">
-            {copyState === "copied" ? (
-              <Check aria-hidden="true" />
-            ) : (
-              <Clipboard aria-hidden="true" />
-            )}
-            <span>{copyState === "copied" ? "Copied" : "Copy"}</span>
-          </button>
+          <div className="created-result-actions">
+            <button type="button" onClick={handleCopy} className="copy-button">
+              {copyState === "copied" ? (
+                <Check aria-hidden="true" />
+              ) : (
+                <Clipboard aria-hidden="true" />
+              )}
+              <span>{copyState === "copied" ? "Copied" : "Copy"}</span>
+            </button>
+            <Link
+              className="result-detail-link"
+              to={`/links/${encodeURIComponent(createdLink.slug)}`}
+            >
+              <ChartNoAxesColumnIncreasing aria-hidden="true" />
+              <span>View analytics</span>
+            </Link>
+          </div>
           {copyState === "failed" ? (
             <span className="copy-error" role="alert">
               Copy failed — select the link manually.
