@@ -1,0 +1,22 @@
+.git
+.gitignore
+.github
+
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+apps/api/src/generated/prisma
+
+# Secrets must never enter the build context. Keep only the public template.
+**/.env
+**/.env.*
+!**/.env.example
+
+.postman
+postman
+design-system
+.idea
+.vscode
+*.log
+README.md

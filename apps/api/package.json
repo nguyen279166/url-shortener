@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "prisma",
+    "prisma.config.ts",
+    ".env.example"
+  ],
   "engines": {
     "node": ">=22"
   },
@@ -29,6 +35,7 @@
     "express": "^5.2.1",
     "helmet": "^8.2.0",
     "pg": "^8.22.0",
+    "prisma": "^7.8.0",
     "redis": "^6.1.0",
     "zod": "^4.4.3"
   },
@@ -41,7 +48,6 @@
     "@types/supertest": "^7.2.0",
     "eslint": "^10.5.0",
     "globals": "^17.6.0",
-    "prisma": "^7.8.0",
     "supertest": "^7.2.2",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",

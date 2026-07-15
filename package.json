@@ -14,7 +14,11 @@
     "db:migrate": "pnpm --filter @url-shortener/api db:migrate",
     "db:studio": "pnpm --filter @url-shortener/api db:studio",
     "db:validate": "pnpm --filter @url-shortener/api db:validate",
+    "docker:build": "docker build --target runtime --tag url-shortener-api:local .",
     "lint": "pnpm -r lint",
+    "stack:logs": "docker compose --profile app logs --follow api",
+    "stack:start": "docker compose --profile app up --detach --build",
+    "stack:stop": "docker compose --profile app down",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   }
