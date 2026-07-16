@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 
+import { CopyShortLinkButton } from "../components/CopyShortLinkButton";
 import { LinkStatus } from "../components/LinkStatus";
 import {
   ApiError,
@@ -208,15 +209,22 @@ export const LinkDetailPage = () => {
           </Link>
           <span className="section-index">04 / route detail</span>
           <h1>/{link.slug}</h1>
-          <a
-            className="detail-short-url"
-            href={shortUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {shortUrl}
-            <ArrowUpRight aria-hidden="true" />
-          </a>
+          <div className="detail-short-url-row">
+            <a
+              className="detail-short-url"
+              href={shortUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {shortUrl}
+              <ArrowUpRight aria-hidden="true" />
+            </a>
+            <CopyShortLinkButton
+              shortPath={link.shortPath}
+              slug={link.slug}
+              showLabel
+            />
+          </div>
         </div>
 
         <div className="detail-signal">

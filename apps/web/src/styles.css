@@ -603,6 +603,58 @@ footer a:hover {
   background: rgba(255, 255, 255, 0.07);
 }
 
+.short-link-copy-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.short-link-copy-button {
+  display: inline-flex;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  color: var(--ink-soft);
+  background: transparent;
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+.short-link-copy-button--labeled {
+  width: auto;
+  min-width: 92px;
+  border: 1px solid var(--line);
+  padding-inline: 12px;
+}
+
+.short-link-copy-button:hover {
+  color: var(--signal-text);
+  background: color-mix(in srgb, var(--signal) 10%, transparent);
+}
+
+.short-link-copy-button[data-copy-state="copied"] {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+
+.short-link-copy-button[data-copy-state="failed"] {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+}
+
+.short-link-copy-button svg {
+  width: 15px;
+  flex: 0 0 auto;
+}
+
+.short-link-copy-button > span {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .copy-error {
   grid-column: 1 / -1;
   color: #ffd7ce;
@@ -723,11 +775,21 @@ footer a:hover {
 .link-primary > a:first-child {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
+  overflow: hidden;
   font-family: "Fira Code", monospace;
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration-color: var(--signal);
   text-underline-offset: 4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-row-actions {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 .link-primary .redirect-link {
@@ -999,7 +1061,14 @@ footer a {
   }
 
   .link-primary {
-    grid-column: 1;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 8px;
+  }
+
+  .link-primary::before {
+    grid-column: 1 / -1;
   }
 
   .link-destination {
@@ -1009,7 +1078,7 @@ footer a {
 
   .link-number {
     grid-column: 2;
-    grid-row: 1;
+    grid-row: 3;
     text-align: right;
   }
 
@@ -1380,6 +1449,18 @@ main:focus {
   font-size: 0.78rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.detail-short-url-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 12px;
+}
+
+.detail-short-url-row .detail-short-url {
+  min-width: 0;
 }
 
 .detail-signal {
@@ -2684,6 +2765,7 @@ main:focus {
 }
 
 .dashboard-link-route > div > a:first-child {
+  min-width: 0;
   overflow: hidden;
   font-family: "Fira Code", monospace;
   font-size: 0.78rem;

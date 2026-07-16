@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 
+import { useClipboardCopy } from "../hooks/useClipboardCopy";
 import {
   ApiError,
   SHORT_URL_BASE,
@@ -36,16 +37,14 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
   const [customAlias, setCustomAlias] = useState("");
   const [error, setError] = useState("");
   const [createdLink, setCreatedLink] = useState<ShortLink | null>(null);
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
-    "idle",
-  );
+  const { copyState, copyText, resetCopyState } = useClipboardCopy();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     setCreatedLink(null);
-    setCopyState("idle");
+    resetCopyState();
 
     const normalizedUrl = url.trim();
     const normalizedAlias = customAlias.trim();
@@ -85,17 +84,12 @@ export const ShortenForm = ({ onCreated }: ShortenFormProps) => {
     }
   };
 
-  const handleCopy = async () => {
+  const handleCopy = () => {
     if (!createdLink) {
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(getShortUrl(createdLink.shortPath));
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
+    void copyText(getShortUrl(createdLink.shortPath));
   };
 
   const shortUrlHost = new URL(SHORT_URL_BASE).host;

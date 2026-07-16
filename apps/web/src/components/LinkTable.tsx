@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { getShortUrl } from "../lib/api";
 import type { ShortLink } from "../types/link";
 import { formatDate, formatDestination } from "../utils/link";
+import { CopyShortLinkButton } from "./CopyShortLinkButton";
 import { LinkStatus } from "./LinkStatus";
 
 type LinkTableProps = {
@@ -75,15 +76,21 @@ export const LinkTable = ({
           <article className="link-row" key={link.id}>
             <div className="link-primary" data-label="Short route">
               <Link to={`/links/${encodeURIComponent(link.slug)}`}>/{link.slug}</Link>
-              <a
-                className="redirect-link"
-                href={getShortUrl(link.shortPath)}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open redirect ${link.slug} in a new tab`}
-              >
-                <ArrowUpRight aria-hidden="true" />
-              </a>
+              <span className="link-row-actions">
+                <CopyShortLinkButton
+                  shortPath={link.shortPath}
+                  slug={link.slug}
+                />
+                <a
+                  className="redirect-link"
+                  href={getShortUrl(link.shortPath)}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open redirect ${link.slug} in a new tab`}
+                >
+                  <ArrowUpRight aria-hidden="true" />
+                </a>
+              </span>
             </div>
             <div className="link-destination" data-label="Destination">
               <span title={link.originalUrl}>{formatDestination(link.originalUrl)}</span>

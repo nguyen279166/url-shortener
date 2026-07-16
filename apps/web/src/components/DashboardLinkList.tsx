@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { getShortUrl } from "../lib/api";
 import type { ShortLink } from "../types/link";
 import { formatDate, formatDestination } from "../utils/link";
+import { CopyShortLinkButton } from "./CopyShortLinkButton";
 import { LinkStatus } from "./LinkStatus";
 
 type DashboardLinkListProps = {
@@ -48,6 +49,7 @@ export const DashboardLinkList = ({
           <div className="dashboard-link-route">
             <div>
               <Link to={`/links/${encodeURIComponent(link.slug)}`}>/{link.slug}</Link>
+              <CopyShortLinkButton shortPath={link.shortPath} slug={link.slug} />
               <a
                 href={getShortUrl(link.shortPath)}
                 target="_blank"
