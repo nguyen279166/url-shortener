@@ -37,6 +37,7 @@ export const createApp = (options: CreateAppOptions = {}) => {
   app.use(express.json({ limit: "10kb" }));
 
   app.use("/api/health", healthRouter);
+
   app.use("/api/dashboard", authMiddleware, dashboardRouter);
   app.use("/api/links", authMiddleware, linkRouter);
   app.use("/", redirectRouter);
