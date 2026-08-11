@@ -20,6 +20,11 @@
     "stack:start": "docker compose --profile app up --detach --build",
     "stack:stop": "docker compose --profile app down",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
