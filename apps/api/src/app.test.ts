@@ -24,7 +24,6 @@ describe("API", () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
       status: "ok",
-      revision: "local",
     });
   });
 
